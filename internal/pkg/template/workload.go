@@ -65,6 +65,7 @@ var (
 		"image-overrides",
 		"instancerole",
 		"accessrole",
+		"publish",
 	}
 )
 
@@ -346,8 +347,9 @@ func withSvcParsingFuncs() ParseOption {
 			"quoteSlice":          QuotePSliceFunc,
 			"randomUUID":          randomUUIDFunc,
 			"jsonMountPoints":     generateMountPointJSON,
-			"jsonPublishers":      generatePublishJSON,
+			"jsonSNSTopics":       generateSNSJSON,
 			"envControllerParams": envControllerParameters,
+			"logicalIDSafe":       StripNonAlphaNumFunc,
 		})
 	}
 }
