@@ -6,6 +6,7 @@ package stack
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/copilot-cli/internal/pkg/manifest"
@@ -25,6 +26,7 @@ var (
 	errNoContainerPath = errors.New("`path` cannot be empty")
 	errNoSourceVolume  = errors.New("`source_volume` cannot be empty")
 	errEmptyEFSConfig  = errors.New("bad EFS configuration: `efs` cannot be empty")
+	errNoPubSubName    = errors.New("topic/worker names cannot be empty")
 )
 
 // Conditional errors.
@@ -40,6 +42,7 @@ var (
 	errInvalidSidecarDependsOnStatus = fmt.Errorf("sidecar container dependency status must be one of < %s | %s | %s >", dependsOnStart, dependsOnComplete, dependsOnSuccess)
 	errEssentialContainerStatus      = fmt.Errorf("essential container dependencies can only have status < %s | %s >", dependsOnStart, dependsOnHealthy)
 	errEssentialSidecarStatus        = fmt.Errorf("essential sidecar container dependencies can only have status < %s >", dependsOnStart)
+	errInvalidPubSubName             = errors.New("topic/worker names can only contain letters, numbers, underscores, and hypthens")
 )
 
 // Container dependency status options
@@ -391,4 +394,18 @@ func validateRootDirPath(input string) error {
 
 func validateContainerPath(input string) error {
 	return validatePath(input, maxDockerContainerPathLength)
+}
+
+func validatePubSubName(name *string) error {
+	if name == nil || len(aws.StringValue(name)) == 0 {
+		return errNoPubSubName
+	}
+
+	// name must contain letters, numbers, and can't use special characters besides _ and -
+	re := regexp.MustCompile("^[a-zA-Z0-9_-]*$")
+	if !re.MatchString(aws.StringValue(name)) {
+		return errInvalidPubSubName
+	}
+
+	return nil
 }

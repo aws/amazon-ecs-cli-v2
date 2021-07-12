@@ -568,3 +568,64 @@ func convertCommand(command *manifest.CommandOverride) ([]string, error) {
 	}
 	return out, nil
 }
+
+func convertPublish(p *manifest.PublishConfig) (*template.PublishOpts, error) {
+	if p == nil || p.Topics == nil {
+		return nil, nil
+	}
+	publishers := template.PublishOpts{}
+	// convert the topics to template Topics
+	for _, topic := range p.Topics {
+		t, err := convertTopic(&topic)
+		if err != nil {
+			return nil, err
+		}
+
+		publishers.Topics = append(publishers.Topics, t)
+	}
+
+	return &publishers, nil
+}
+
+func convertTopic(t *manifest.Topic) (*template.Topics, error) {
+	err := validatePubSubName(t.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := convertTopicWorkers(t.AllowedWorkers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &template.Topics{
+		Name:           t.Name,
+		AllowedWorkers: w,
+	}, nil
+}
+
+func convertTopicWorkers(w []string) ([]*string, error) {
+	if w == nil {
+		return nil, nil
+	}
+
+	workers := []*string{}
+	for _, name := range w {
+		if len(name) == 0 {
+			continue
+		}
+
+		err := validatePubSubName(aws.String(name))
+		if err != nil {
+			return nil, err
+		}
+
+		workers = append(workers, aws.String(name))
+	}
+
+	if len(workers) == 0 {
+		return nil, nil
+	}
+
+	return workers, nil
+}

@@ -498,3 +498,33 @@ func TestValidateImageDependsOn(t *testing.T) {
 		})
 	}
 }
+
+func Test_validateNames(t *testing.T) {
+	testCases := map[string]struct {
+		inName *string
+
+		wantErr error
+	}{
+		"valid topic name": {
+			inName: aws.String("a-Perfectly_V4l1dString"),
+		},
+		"error when no topic name": {
+			inName:  nil,
+			wantErr: errNoPubSubName,
+		},
+		"error when invalid topic name": {
+			inName:  aws.String("OHNO~/`...,"),
+			wantErr: errInvalidPubSubName,
+		},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			err := validatePubSubName(tc.inName)
+			if tc.wantErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.wantErr.Error())
+			}
+		})
+	}
+}
